@@ -1,0 +1,4 @@
+.env
+mindtwin.db
+__pycache__/
+*.pyc
