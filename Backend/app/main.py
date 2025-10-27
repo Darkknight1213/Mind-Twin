@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.models.models import SessionLocal, User, Lesson
-from app.crud.crud import create_user, get_user, create_lesson, get_lesson, get_lessons
+from models.models import SessionLocal, User, Lesson
+from crud.crud import create_user, get_user, create_lesson, get_lesson, get_lessons
 
 app = FastAPI()
 
@@ -59,7 +59,7 @@ def read_lessons(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     lessons = get_lessons(db, skip=skip, limit=limit)
     return lessons
 
-from app.crud.crud import create_checkin, get_user_checkins
+from crud.crud import create_checkin, get_user_checkins
 
 @app.post("/checkin/")
 def daily_checkin(user_id: int, mood: str, energy: int, db: Session = Depends(get_db)):
@@ -86,7 +86,7 @@ def get_dashboard(user_id: int, db: Session = Depends(get_db)):
         "total_lessons_completed": total_lessons
     }
 
-from app.crud.crud import create_journal_entry, get_journal_entries
+from crud.crud import create_journal_entry, get_journal_entries
 
 @app.post("/journal/")
 def new_journal_entry(user_id: int, content: str, mood: str = None, db: Session = Depends(get_db)):
