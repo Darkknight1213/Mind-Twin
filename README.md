@@ -72,8 +72,7 @@ We ❤️ collaboration!
 
 - Ramith | Backend/Infra
 - Deepshika / Nabithra | AI/Content
-- [Your Name] | Frontend, UI/UX Integration
-- [Additional team]
+- Mohamed Riyaz Ahamed | Frontend, UI/UX Integration
 
 ***
 
