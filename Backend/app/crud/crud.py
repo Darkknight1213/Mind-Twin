@@ -12,6 +12,26 @@ def create_user(db: Session, email: str, name: str, hashed_password: str):
     db.commit()
     db.refresh(user)
     return user
+def update_user_profile(db: Session, user_id: int, name=None, avatar_url=None, initial_mood=None, preferences=None):
+    user = db.query(User).filter(User.id == user_id).first()
+    if name is not None:
+        user.name = name
+    if avatar_url is not None:
+        user.avatar_url = avatar_url
+    if initial_mood is not None:
+        user.initial_mood = initial_mood
+    if preferences is not None:
+        user.preferences = preferences
+    db.commit()
+    db.refresh(user)
+    return user
+
+def set_onboarding_complete(db: Session, user_id: int):
+    user = db.query(User).filter(User.id == user_id).first()
+    user.onboarding_complete = 1
+    db.commit()
+    db.refresh(user)
+    return user
 
 def get_user(db: Session, user_id: int):
     return db.query(User).filter(User.id == user_id).first()
@@ -45,13 +65,38 @@ def get_user_checkins(db: Session, user_id: int, days: int = 7):
 
 from app.models.models import JournalEntry
 
-def create_journal_entry(db: Session, user_id: int, content: str, mood: str = None):
-    entry = JournalEntry(user_id=user_id, content=content, mood=mood)
+def create_journal_entry(
+    db: Session, user_id: int, content: str, mood: str = None,
+    type: str = "text", voice_url: str = None, photo_url: str = None
+):
+    entry = JournalEntry(
+        user_id=user_id,
+        content=content,
+        mood=mood,
+        type=type,
+        voice_url=voice_url,
+        photo_url=photo_url
+    )
     db.add(entry)
     db.commit()
     db.refresh(entry)
     return entry
 
+
 def get_journal_entries(db: Session, user_id: int, days: int = 7):
     recent = datetime.datetime.utcnow() - datetime.timedelta(days=days)
     return db.query(JournalEntry).filter(JournalEntry.user_id == user_id, JournalEntry.date >= recent).all()
+
+from app.models.models import CompletedLesson
+
+def mark_lesson_completed(db: Session, user_id: int, lesson_id: int):
+    completed = CompletedLesson(user_id=user_id, lesson_id=lesson_id)
+    db.add(completed)
+    db.commit()
+    db.refresh(completed)
+    return completed
+
+def user_has_completed_lesson(db: Session, user_id: int, lesson_id: int):
+    return db.query(CompletedLesson).filter(
+        CompletedLesson.user_id == user_id, CompletedLesson.lesson_id == lesson_id
+    ).first()
