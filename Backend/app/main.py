@@ -151,34 +151,14 @@ def read_lessons(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     lessons = get_lessons(db, skip=skip, limit=limit)
     return lessons
 
+from app.crud.crud import create_checkin, get_user_checkins
 
-@app.post("/lessons/{lesson_id}/complete", response_model=LessonCompletedResponse)
-def complete_lesson(lesson_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    # Check if already completed
-    if user_has_completed_lesson(db, current_user.id, lesson_id):
-        raise HTTPException(status_code=400, detail="Lesson already completed")
-    # Mark as completed
-    completed = mark_lesson_completed(db, current_user.id, lesson_id)
-    lesson = get_lesson(db, lesson_id)
-    # Award XP/level
-    current_user.xp += lesson.xp_reward
-    if current_user.xp >= 100 * current_user.level:
-        current_user.level += 1
-    db.commit()
-    db.refresh(current_user)
-    return LessonCompletedResponse(
-        user_id=current_user.id,
-        lesson_id=lesson_id,
-        completed_at=completed.completed_at.strftime("%Y-%m-%d %H:%M:%S"),
-        xp=current_user.xp,
-        level=current_user.level
-    )
-    
-# CheckIn (Daily Mood)
-@app.post("/checkin/", response_model=CheckInResponse)
-def daily_checkin(data: CheckInCreateRequest, db: Session = Depends(get_db)):
-    checkin = create_checkin(db, data.user_id, data.mood, data.energy)
-    user = get_user(db, data.user_id)
+@app.post("/checkin/")
+def daily_checkin(user_id: int, mood: str, energy: int, db: Session = Depends(get_db)):
+    # Add logic to update streak, XP for user (bonus: check previous day's check-in)
+    checkin = create_checkin(db, user_id, mood, energy)
+    user = get_user(db, user_id)
+    # Sample logic for streak/XP
     user.xp += 10
     user.streak += 1
     db.commit()
@@ -192,35 +172,21 @@ from app.models.models import CompletedLesson
 def get_dashboard(user_id: int, db: Session = Depends(get_db)):
     user = get_user(db, user_id)
     checkins = get_user_checkins(db, user_id)
-    total_lessons = db.query(CompletedLesson).filter(CompletedLesson.user_id == user_id).count()
-    # Example dummy badge logic, expand as you wish!
-    badges = []
-    if user.streak >= 7:
-        badges.append("7-Day Streak")
-    if user.xp >= 100:
-        badges.append("Level 1 XP Achiever")
-    return DashboardResponse(
-        xp=user.xp,
-        level=user.level,
-        streak=user.streak,
-        badges=badges,
-        recent_moods=[c.mood for c in checkins],
-        total_lessons_completed=total_lessons
-    )
+    total_lessons = 0  # You can count lessons if you make a completed-lessons table later
+    return {
+        "xp": user.xp,
+        "level": user.level,
+        "streak": user.streak,
+        "recent_moods": [c.mood for c in checkins],
+        "total_lessons_completed": total_lessons
+    }
 
-# Journal
-@app.post("/journal/", response_model=JournalEntryResponse)
-def new_journal_entry(data: JournalCreateRequest, db: Session = Depends(get_db)):
-    entry = create_journal_entry(
-        db,
-        data.user_id,
-        data.content,
-        data.mood,
-        data.type,
-        data.voice_url,
-        data.photo_url
-    )
-    user = get_user(db, data.user_id)
+from app.crud.crud import create_journal_entry, get_journal_entries
+
+@app.post("/journal/")
+def new_journal_entry(user_id: int, content: str, mood: str = None, db: Session = Depends(get_db)):
+    entry = create_journal_entry(db, user_id, content, mood)
+    user = get_user(db, user_id)
     user.xp += 15  # Award XP for journaling
     db.commit()
     db.refresh(user)

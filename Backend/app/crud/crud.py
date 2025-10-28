@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy.orm import Session
-from app.models.models import User, Lesson
+from models.models import User, Lesson
 
 # USERS CRUD
 def get_user_by_email(db: Session, email: str):
@@ -50,7 +50,7 @@ def get_lesson(db: Session, lesson_id: int):
 def get_lessons(db: Session, skip: int = 0, limit: int = 10):
     return db.query(Lesson).offset(skip).limit(limit).all()
 
-from app.models.models import CheckIn
+from models.models import CheckIn
 
 def create_checkin(db: Session, user_id: int, mood: str, energy: int):
     checkin = CheckIn(user_id=user_id, mood=mood, energy=energy)
@@ -63,7 +63,7 @@ def get_user_checkins(db: Session, user_id: int, days: int = 7):
     recent = datetime.datetime.utcnow() - datetime.timedelta(days=days)
     return db.query(CheckIn).filter(CheckIn.user_id == user_id, CheckIn.date >= recent).all()
 
-from app.models.models import JournalEntry
+from models.models import JournalEntry
 
 def create_journal_entry(
     db: Session, user_id: int, content: str, mood: str = None,
