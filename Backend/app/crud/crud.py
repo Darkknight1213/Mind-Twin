@@ -7,7 +7,7 @@ def get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
 
 def create_user(db: Session, email: str, name: str, hashed_password: str):
-    user = User(email=email, name=name, password=hashed_password)
+    user = User(email=email, name=name, hashed_password=hashed_password)
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -87,7 +87,7 @@ def get_journal_entries(db: Session, user_id: int, days: int = 7):
     recent = datetime.datetime.utcnow() - datetime.timedelta(days=days)
     return db.query(JournalEntry).filter(JournalEntry.user_id == user_id, JournalEntry.date >= recent).all()
 
-from app.models.models import CompletedLesson
+from models.models import CompletedLesson
 
 def mark_lesson_completed(db: Session, user_id: int, lesson_id: int):
     completed = CompletedLesson(user_id=user_id, lesson_id=lesson_id)

@@ -11,7 +11,7 @@ load_dotenv()
 SQLALCHEMY_DATABASE_URL = os.environ.get("DATABASE_URL")
 
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL
+    SQLALCHEMY_DATABASE_URL, echo=False
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -67,10 +67,3 @@ class JournalEntry(Base):
     type = Column(String, nullable=True)  # "text", "voice", "photo"
     voice_url = Column(String, nullable=True)
     photo_url = Column(String, nullable=True)
-
-class CompletedLesson(Base):
-    __tablename__ = "completedlessons"
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, nullable=False)
-    lesson_id = Column(Integer, nullable=False)
-    completed_at = Column(DateTime, default=datetime.datetime.utcnow)

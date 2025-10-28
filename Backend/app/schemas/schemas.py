@@ -1,5 +1,9 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
+from pydantic import BaseModel, EmailStr
+from typing import Optional, List
+from datetime import datetime
+
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -14,11 +18,14 @@ class UserResponse(BaseModel):
     id: int
     email: EmailStr
     name: str
-    avatar_url: str = None
-    created_at: str
-    initial_mood: str = None
-    onboarding_complete: int = 0
-    preferences: str = None
+    avatar_url: Optional[str] = None
+    created_at: datetime  # Accept datetime, not string
+    initial_mood: Optional[str] = None
+    onboarding_complete: bool = False
+    preferences: Optional[str] = None
+
+    class Config:
+        from_attributes = True  # Allows Pydantic to read SQLAlchemy models
 class ProfileUpdateRequest(BaseModel):
     name: Optional[str]
     avatar_url: Optional[str]

@@ -33,7 +33,8 @@ def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password):
-    return pwd_context.hash(password)
+    # Truncate at 72 chars per bcrypt rules
+    return pwd_context.hash(password[:72])
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
     to_encode = data.copy()
@@ -78,9 +79,12 @@ def read_root():
 # Registration Endpoint
 @app.post("/users/", response_model=UserResponse)
 def register_user(data: RegisterRequest, db: Session = Depends(get_db)):
+    if len(data.password) > 72:
+        raise HTTPException(status_code=400, detail="Password cannot exceed 72 characters.")
     hashed_password = get_password_hash(data.password)
     db_user = create_user(db, email=data.email, name=data.name, hashed_password=hashed_password)
     return db_user
+
 
 # Login Endpoint
 @app.post("/auth/login")
@@ -108,8 +112,8 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
 
-from app.schemas.schemas import ProfileUpdateRequest
-from app.crud.crud import update_user_profile, set_onboarding_complete
+from schemas.schemas import ProfileUpdateRequest
+from crud.crud import update_user_profile, set_onboarding_complete
 
 @app.get("/profile", response_model=UserResponse)
 def get_profile(current_user: User = Depends(get_current_user)):
@@ -151,7 +155,7 @@ def read_lessons(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     lessons = get_lessons(db, skip=skip, limit=limit)
     return lessons
 
-from app.crud.crud import create_checkin, get_user_checkins
+from crud.crud import create_checkin, get_user_checkins
 
 @app.post("/checkin/")
 def daily_checkin(user_id: int, mood: str, energy: int, db: Session = Depends(get_db)):
@@ -166,7 +170,7 @@ def daily_checkin(user_id: int, mood: str, energy: int, db: Session = Depends(ge
     return checkin
 
 # Dashboard/Stats
-from app.models.models import CompletedLesson
+from models.models import CompletedLesson
 
 @app.get("/dashboard/{user_id}", response_model=DashboardResponse)
 def get_dashboard(user_id: int, db: Session = Depends(get_db)):
@@ -181,7 +185,7 @@ def get_dashboard(user_id: int, db: Session = Depends(get_db)):
         "total_lessons_completed": total_lessons
     }
 
-from app.crud.crud import create_journal_entry, get_journal_entries
+from crud.crud import create_journal_entry, get_journal_entries
 
 @app.post("/journal/")
 def new_journal_entry(user_id: int, content: str, mood: str = None, db: Session = Depends(get_db)):
